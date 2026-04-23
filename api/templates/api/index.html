@@ -74,12 +74,21 @@
       color: #8a0000;
     }
 
-    .list-box {
+    .btn-logout {
+      font-size: 18px;
+      font-weight: 700;
+      border: 2px solid #164516;
+      background: #f0fff0;
+      color: #164516;
+    }
+
+    .list-box, .chart-box, .filter-box {
       margin-top: 24px;
       border: 3px solid #c81e1e;
       border-radius: 16px;
       overflow: hidden;
       background: rgba(255,255,255,0.5);
+      padding: 16px;
     }
 
     .table thead th {
@@ -102,12 +111,120 @@
       padding: 30px;
       color: #2c5f2c;
     }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .userinfo {
+      font-size: 20px;
+      color: #164516;
+      font-weight: 700;
+    }
+
+    .stat-card {
+      border: 3px solid #c81e1e;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.55);
+      padding: 18px;
+      height: 100%;
+    }
+
+    .stat-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #164516;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 34px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
   </style>
 </head>
 <body>
   <div class="page">
     <div class="frame">
-      <h1>Личный трекер расходов</h1>
+      <div class="topbar">
+        <div>
+          <h1>Личный трекер расходов</h1>
+          {% if user.is_authenticated %}
+            <div class="userinfo">Пользователь: {{ user.username }}</div>
+          {% endif %}
+        </div>
+
+        {% if user.is_authenticated %}
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-logout btn-lg">Выйти</button>
+        </form>
+        {% endif %}
+      </div>
+
+      <div class="filter-box">
+        <form method="get" class="row g-3 align-items-end">
+          <div class="col-12 col-md-3">
+            <label class="form-label">Месяц</label>
+            <select name="month" class="form-select">
+              {% for num, name in months_choices %}
+                <option value="{{ num }}" {% if num == selected_month %}selected{% endif %}>{{ name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="form-label">Год</label>
+            <select name="year" class="form-select">
+              {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12 col-md-2">
+            <button type="submit" class="btn btn-add w-100">Показать</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="row g-3 my-4">
+        <div class="col-12 col-md-4">
+          <div class="stat-card">
+            <div class="stat-title">Доходы</div>
+            <div class="stat-value text-success">{{ total_income }} ₽</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="stat-card">
+            <div class="stat-title">Расходы</div>
+            <div class="stat-value text-danger">{{ total_expense }} ₽</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="stat-card">
+            <div class="stat-title">Баланс</div>
+            <div class="stat-value {% if balance >= 0 %}text-primary{% else %}text-danger{% endif %}">
+              {{ balance }} ₽
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-box">
+        {{ chart_html|safe }}
+      </div>
+
+      <div class="col-12 col-md-2">
+  <a class="btn btn-success w-100" href="{% url 'export-csv' %}?month={{ selected_month }}&year={{ selected_year }}">
+    Скачать CSV
+  </a>
+</div>
 
       <h2>Добавить запись</h2>
       <form method="post" class="row g-3 align-items-end">
